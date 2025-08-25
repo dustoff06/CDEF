@@ -63,3 +63,14 @@ Clone the repository and install required packages:
 git clone https://github.com/your-username/CDEF-Copula.git
 cd CDEF-Copula
 pip install -r requirements.txt
+
+📖 Citation
+If you use this framework in your research, please cite:
+
+@article{yourname2025CDEF,
+  title={Balancing Phantom Concordance and Genuine Reliability in Ranking Systems: A Copula-Based Framework},
+  author={Fulton, Lawrence and Merritt, Lien Lea},
+  year={2025},
+  journal={Under Review}
+}
+
