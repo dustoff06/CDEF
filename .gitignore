@@ -1,12 +1,50 @@
+# --- Python / build ---
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*.so
+dist/
+build/
 *.egg-info/
-.dist/
-.build/
-.env/
-.venv/
+.eggs/
+pip-wheel-metadata/
+
+# --- Virtual envs ---
+.env
+.env.*
 venv/
-.cache/
+.venv/
+env/
+
+# --- Testing / coverage ---
+.pytest_cache/
+.coverage*
+htmlcov/
+.tox/
+.nox/
+
+# --- Type checkers / linters ---
+.mypy_cache/
+.pytype/
+.ruff_cache/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+
+# --- Editors / OS ---
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# --- Logs ---
+*.log
+
+# --- Data: ignore by default, keep exemplar(s) ---
+*.csv
+*.tsv
+*.xlsx
+!src/examples/data.xlsx   # track the demo data
+
+# --- Docs output (if built) ---
+docs/_build/
+site/
