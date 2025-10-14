@@ -16,7 +16,7 @@ from typing import Dict, Tuple, Optional
 from dataclasses import dataclass
 import sys
 import os
-from .core import RankDependencyAnalyzer, CopulaResults
+from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
 
    
 
