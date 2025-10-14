@@ -11,9 +11,6 @@ import os
 import pandas as pd
 from scipy.stats import kendalltau
 
-# Import the actual analyzer and results class from gumbel_copula_fixed
-from .gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
-
 # The demo module (optional)
 try:
     from . import cdef_demo_fixed as demo
