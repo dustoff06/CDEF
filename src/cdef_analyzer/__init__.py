@@ -1,4 +1,4 @@
 # src/cdef_analyzer/__init__.py
-from .core import RankDependencyAnalyzer, CopulaResults
+from .gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
 
 __all__ = ["RankDependencyAnalyzer", "CopulaResults"]
