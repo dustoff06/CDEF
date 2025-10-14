@@ -7,7 +7,7 @@ Uses the properly fixed Gumbel copula analyzer with:
 - Proper log-likelihoods
 - Relative importance (not fake conditional probabilities)
 """
-
+from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
 import numpy as np
 import pandas as pd
 from scipy.stats import kendalltau, chi2_contingency, entropy
@@ -16,7 +16,7 @@ from typing import Dict, Tuple, Optional
 from dataclasses import dataclass
 import sys
 import os
-from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
+
 
    
 
