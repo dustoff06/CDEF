@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdef-analyzer"
+version = "0.1.0"
+description = "CDEF: Concordance–Dispersion–Extremeness analyzer with Gumbel copulas for ranking data"
+readme = "README.md"
+requires-python = ">=3.9,<3.11"
+license = {text = "MIT"}
+authors = [{name = "Your Name"}]
+keywords = ["copula", "rankings", "Gumbel", "Kendall W", "Mallows"]
+dependencies = [
+  "numpy>=1.21,<2",
+  "pandas>=1.5,<2.1",
+  "scipy>=1.9,<1.12",
+  "copulas>=0.7,<0.9",
+  "fastapi>=0.110,<1",
+  "uvicorn[standard]>=0.24,<1",
+  "pydantic>=1.10,<2",                 # FastAPI 0.x pairs with Pydantic v1
+  "openpyxl>=3.1,<4",
+  "xlsxwriter>=3.0,<4"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7,<9",
+  "pytest-cov>=4,<5",
+  "ruff>=0.5,<1",
+  "mypy>=1.6,<2",
+  "pip-tools>=7,<8"
+]
+
+[project.scripts]
+cdef-cli = "cdef_analyzer.cli:main"
+cdef-api = "cdef_analyzer.api:serve"
+
+[tool.setuptools.packages.find]
+where = ["src"]
