@@ -1,4 +1,4 @@
-from cdef_analyzer.core import RankDependencyAnalyzer, CopulaResults
+from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
 
 if __name__ == "__main__":
     main()
