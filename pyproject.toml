@@ -7,7 +7,7 @@ name = "cdef-analyzer"
 version = "0.1.0"
 description = "CDEF: Concordance–Dispersion–Extremeness analyzer with Gumbel-copula ranking diagnostics"
 readme = "README.md"
-requires-python = ">=3.9,<3.13"
+requires-python = ">=3.9"
 license = { text = "MIT" }
 authors = [{ name="Your Name", email="you@example.com" }]
 keywords = ["copula", "ranking", "Gumbel", "Kendall", "Mallows", "CDEF"]
