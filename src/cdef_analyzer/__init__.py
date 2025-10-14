@@ -5,7 +5,10 @@ A statistical framework for analyzing ranking concordance using Gumbel copulas,
 distinguishing genuine agreement from phantom concordance (shared biases).
 """
 
-from .gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
+from .core import RankDependencyAnalyzer, CopulaResults
+
+__all__ = ["RankDependencyAnalyzer", "CopulaResults"]
+
 from .core import (
     analyze_excel,
     analyze_dataframe,
