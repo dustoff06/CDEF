@@ -579,104 +579,97 @@ def compute_mutual_information_and_independence(
             'Extremeness': round(theta / total, 3)
         }
     
-    def analyze_from_excel(
-        self, file_path: str, sheet_name: str, 
-        rater_col: str, ratee_col: str, ranking_col: str
-    ) -> CopulaResults:
-        """
-        Complete analysis pipeline from Excel file.
-        
-        Args:
-            file_path: Path to Excel file
-            sheet_name: Sheet name
-            rater_col: Column name for raters
-            ratee_col: Column name for items being ranked
-            ranking_col: Column name for rank values
-            
-        Returns:
-            CopulaResults dataclass with all analysis outputs
-        """
-        # Load data
-        rankings_wide = self.load_excel(file_path, sheet_name, rater_col, ratee_col, ranking_col)
-        
-        print(f"\nLoaded data: {len(rankings_wide)} ratees x {len(rankings_wide.columns)} raters")
-        print(f"Raters: {list(rankings_wide.columns)}")
-        
-        # Detect ranking type
-        ranking_type = self.detect_ranking_type(rankings_wide)
-        print(f"Ranking type: {ranking_type}")
-        
-        # Fit Gumbel copulas (pairwise)
-        self.fit_gumbel_copulas(rankings_wide)
-        
-        # Calculate core metrics
-        theta_scaled = self.estimate_copula_theta(rankings_wide)
-        theta_gumbel = self.estimate_gumbel_theta(rankings_wide)
-        
-        # Mutual information and chi-square test
-        col1, col2 = rankings_wide.columns[0], rankings_wide.columns[1]
-        mi, p_value, chi2_stat = self.compute_mutual_information_and_independence(
-            rankings_wide[col1].values, rankings_wide[col2].values
-        )
-        
-        # Distribution model selection
-        distribution_model, model_log_likelihood = self.choose_distribution_model(rankings_wide)
-        
-        # Average log-likelihood from copulas
-        avg_log_likelihood = self.compute_avg_log_likelihood(rankings_wide)
-        
-        # Independence baseline
-        independence_log_likelihood = self.compute_independence_log_likelihood(rankings_wide)
-        
-        # Relative importance (not conditional probabilities)
-        relative_importance = self.compute_relative_importance(self.W, mi, theta_scaled)
-        
-        # Tau statistics
-        taus = []
-        for i, c1 in enumerate(rankings_wide.columns):
-            for c2 in rankings_wide.columns[i+1:]:
-                tau, _ = kendalltau(rankings_wide[c1], rankings_wide[c2])
-                taus.append(tau)
-        avg_tau = np.mean(taus) if taus else 0
-        
-        # Pairwise Gumbel thetas
-        pairwise_thetas = {}
-        for pair_name, copula in self.copulas.items():
-            pairwise_thetas[pair_name] = round(copula.theta, 3)
-        
-        # Tau matrix
-        tau_matrix = pd.DataFrame(
-            index=rankings_wide.columns, 
-            columns=rankings_wide.columns,
-            dtype=float
-        )
-        for c1 in rankings_wide.columns:
-            for c2 in rankings_wide.columns:
-                if c1 == c2:
-                    tau_matrix.loc[c1, c2] = 1.0
-                else:
-                    tau, _ = kendalltau(rankings_wide[c1], rankings_wide[c2])
-                    tau_matrix.loc[c1, c2] = round(tau, 3)
-        
-        return CopulaResults(
-            theta_scaled=theta_scaled,
-            theta_gumbel=theta_gumbel,
-            kendalls_W=self.W,
-            avg_kendalls_tau=round(avg_tau, 3),
-            mutual_information=mi,
-            chi_square_stat=chi2_stat,
-            p_value=p_value,
-            avg_log_likelihood=avg_log_likelihood,
-            independence_log_likelihood=independence_log_likelihood,
-            pairwise_thetas=pairwise_thetas,
-            tau_matrix=tau_matrix,
-            ranking_type=ranking_type,
-            distribution_model=distribution_model,
-            model_log_likelihood=model_log_likelihood,
-            relative_importance=relative_importance,
-            n_raters=len(rankings_wide.columns),
-            n_items=len(rankings_wide)
-        )
+def analyze(self, rankings_wide: pd.DataFrame) -> "CopulaResults":
+    """
+    Run the full pipeline on a *wide* rankings DataFrame (ratees as rows, raters as cols).
+    Returns a CopulaResults instance.
+    """
+    # Fit copulas first (uses mid-rank U's internally)
+    self.fit_gumbel_copulas(rankings_wide)
+
+    # Core metrics
+    theta_scaled = self.estimate_copula_theta(rankings_wide)
+    theta_gumbel = self.estimate_gumbel_theta(rankings_wide)
+
+    # Use the first two raters (pairwise) for MI/chi2 as before, but on overlap only
+    raters = list(rankings_wide.columns)
+    if len(raters) < 2:
+        raise ValueError("Need at least two raters for dependence calculations.")
+    pair = rankings_wide[[raters[0], raters[1]]].dropna()
+    mi, p_value, chi2_stat = self.compute_mutual_information_and_independence(
+        pair[raters[0]].values, pair[raters[1]].values
+    )
+
+    # Distribution model selection (forced vs non-forced handled internally)
+    distribution_model, model_log_likelihood = self.choose_distribution_model(rankings_wide)
+
+    # Log-likelihoods
+    avg_log_likelihood = self.compute_avg_log_likelihood(rankings_wide)
+    independence_log_likelihood = self.compute_independence_log_likelihood(rankings_wide)
+
+    # Relative importance (NOT probabilities)
+    relative_importance = self.compute_relative_importance(self.W, mi, theta_scaled)
+
+    # Avg pairwise tau + tau matrix
+    taus = []
+    for i, c1 in enumerate(raters):
+        for c2 in raters[i+1:]:
+            t, _ = kendalltau(rankings_wide[c1], rankings_wide[c2])
+            taus.append(t)
+    avg_tau = float(np.mean(taus)) if taus else 0.0
+
+    tau_matrix = pd.DataFrame(index=raters, columns=raters, dtype=float)
+    for c1 in raters:
+        for c2 in raters:
+            if c1 == c2:
+                tau_matrix.loc[c1, c2] = 1.0
+            else:
+                t, _ = kendalltau(rankings_wide[c1], rankings_wide[c2])
+                tau_matrix.loc[c1, c2] = round(float(t), 3)
+
+    # Pairwise thetas from fitted copulas
+    pairwise_thetas = {pair: round(c.theta, 3) for pair, c in self.copulas.items()}
+
+    return CopulaResults(
+        theta_scaled=theta_scaled,
+        theta_gumbel=theta_gumbel,
+        kendalls_W=self.W,
+        avg_kendalls_tau=round(avg_tau, 3),
+        mutual_information=mi,
+        chi_square_stat=chi2_stat,
+        p_value=p_value,
+        avg_log_likelihood=avg_log_likelihood,
+        independence_log_likelihood=independence_log_likelihood,
+        pairwise_thetas=pairwise_thetas,
+        tau_matrix=tau_matrix,
+        ranking_type=self.detect_ranking_type(rankings_wide),
+        distribution_model=distribution_model,
+        model_log_likelihood=model_log_likelihood,
+        relative_importance=relative_importance,
+        n_raters=len(raters),
+        n_items=len(rankings_wide),
+    )
+
+
+def analyze_from_excel(
+    self,
+    file_path: str,
+    sheet_name: str,
+    rater_col: str,
+    ratee_col: str,
+    ranking_col: str
+) -> "CopulaResults":
+    """
+    Convenience wrapper: load long-format Excel → wide → analyze().
+    """
+    rankings_wide = self.load_excel(
+        file_path=file_path,
+        sheet_name=sheet_name,
+        rater_col=rater_col,
+        ratee_col=ratee_col,
+        ranking_col=ranking_col,
+    )
+    return self.analyze(rankings_wide)
 
 
 def format_results(results: CopulaResults) -> str:
