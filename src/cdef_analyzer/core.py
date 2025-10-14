@@ -20,11 +20,6 @@ from typing import Optional, Dict, Any, Tuple
 import os
 import pandas as pd
 
-# --- Import your analyzer & demo code ---------------------------------------
-# (These come from the two files you shared.)
-from gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults  # noqa: E402
-# ^ Source: gumbel_copula_fixed.py  :contentReference[oaicite:2]{index=2}
-
 # The demo module defines scenario builders and a runner;
 # we import lazily so core works even if users only want the analyzer.
 try:
