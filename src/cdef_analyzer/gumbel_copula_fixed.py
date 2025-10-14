@@ -165,47 +165,85 @@ class RankDependencyAnalyzer:
         W = (12 * S) / (m ** 2 * (N ** 3 - N))
         return round(W, 3)
     
-    def compute_mutual_information_and_independence(
-        self, rankings1: np.ndarray, rankings2: np.ndarray
-    ) -> Tuple[float, float, float]:
-        """
-        Compute mutual information and chi-square test for independence.
-        
-        Uses binning to create contingency table for chi-square test.
-        
-        Args:
-            rankings1: First rater's rankings
-            rankings2: Second rater's rankings
-            
-        Returns:
-            Tuple of (mutual_information, p_value, chi_square_statistic)
-        """
-        # Determine bin count (sqrt rule, minimum 5 for chi-square validity)
-        bins = max(int(np.ceil(np.sqrt(len(rankings1)))), 5)
-        
-        # Create 2D histogram (contingency table)
-        joint_dist, _, _ = np.histogram2d(
-            rankings1, rankings2, 
-            bins=bins,
-            range=[[rankings1.min(), rankings1.max()], 
-                   [rankings2.min(), rankings2.max()]]
-        )
-        
-        # Chi-square test for independence
-        chi2, p_value, dof, _ = chi2_contingency(joint_dist)
-        
-        # Compute mutual information
-        # Add small constant to avoid log(0)
-        joint_dist_smooth = joint_dist + 1e-10
-        joint_dist_norm = joint_dist_smooth / np.sum(joint_dist_smooth)
-        
-        marginal_x = np.sum(joint_dist_norm, axis=1)
-        marginal_y = np.sum(joint_dist_norm, axis=0)
-        
-        mi = (entropy(marginal_x) + entropy(marginal_y) - 
-              entropy(joint_dist_norm.flatten()))
-        
-        return round(mi, 3), round(p_value, 3), round(chi2, 3)
+def compute_mutual_information_and_independence(
+    self,
+    rankings1: np.ndarray,
+    rankings2: np.ndarray,
+    min_bins: int = 3,
+    max_bins: int = 8,
+    min_n: int = 12
+) -> Tuple[float, float, float]:
+    """
+    Robust MI + chi-square independence test for small/sparse samples.
+
+    Steps:
+    - Pairwise drop-NA
+    - Equal-frequency (quantile) binning so bins aren't empty by construction
+    - Back off number of bins if quantiles collapse
+    - Drop all-zero rows/cols before chi-square
+    - Return neutral values for very small n or degenerate tables
+
+    Returns:
+        (mi, p_value, chi2_stat) rounded to 3 decimals
+    """
+    x = np.asarray(rankings1, dtype=float)
+    y = np.asarray(rankings2, dtype=float)
+    mask = np.isfinite(x) & np.isfinite(y)
+    x, y = x[mask], y[mask]
+    n = x.size
+
+    # If there's just not enough overlap, don't pretend there is.
+    if n < min_n:
+        return 0.0, 1.0, 0.0
+
+    # choose target bins ~ sqrt(n), bounded
+    target = int(np.sqrt(n))
+    k = max(min_bins, min(max_bins, target))
+
+    # build quantile edges (equal-frequency bins)
+    def safe_quantile_edges(v, k):
+        q = np.linspace(0.0, 1.0, k + 1)
+        edges = np.unique(np.quantile(v, q))
+        return edges
+
+    x_edges = safe_quantile_edges(x, k)
+    y_edges = safe_quantile_edges(y, k)
+
+    # back off if quantiles collapse (need >= 4 edges → at least 3 bins)
+    while (x_edges.size < min_bins + 1 or y_edges.size < min_bins + 1) and k > min_bins:
+        k -= 1
+        x_edges = safe_quantile_edges(x, k)
+        y_edges = safe_quantile_edges(y, k)
+
+    # if still degenerate, bail out neutrally
+    if x_edges.size < min_bins + 1 or y_edges.size < min_bins + 1:
+        return 0.0, 1.0, 0.0
+
+    # histogram -> contingency
+    H, _, _ = np.histogram2d(x, y, bins=[x_edges, y_edges])
+
+    # trim empty rows/cols to avoid zero expected cells
+    row_keep = H.sum(axis=1) > 0
+    col_keep = H.sum(axis=0) > 0
+    Hc = H[np.ix_(row_keep, col_keep)]
+
+    # need at least 2x2
+    if Hc.shape[0] < 2 or Hc.shape[1] < 2:
+        return 0.0, 1.0, 0.0
+
+    from scipy.stats import chi2_contingency
+    chi2, p_value, dof, expected = chi2_contingency(Hc, correction=False)
+
+    # discrete MI from contingency (natural log)
+    P = Hc / Hc.sum()
+    px = P.sum(axis=1, keepdims=True)
+    py = P.sum(axis=0, keepdims=True)
+    with np.errstate(divide="ignore", invalid="ignore"):
+        mi_mat = np.where(P > 0, P * np.log(P / (px @ py)), 0.0)
+    mi = float(np.nansum(mi_mat))
+
+    return round(mi, 3), round(float(p_value), 3), round(float(chi2), 3)
+
     
     def estimate_gumbel_theta(self, rankings_df: pd.DataFrame) -> float:
         """
