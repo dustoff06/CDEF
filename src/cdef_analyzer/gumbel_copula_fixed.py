@@ -170,42 +170,56 @@ class RankDependencyAnalyzer:
     ) -> Tuple[float, float, float]:
         """
         Compute mutual information and chi-square test for independence.
-        
-        Uses binning to create contingency table for chi-square test.
-        
+    
+        Key fix: drop any all-zero rows/columns from the contingency table
+        before running chi-square to avoid "expected frequency == 0" errors.
+        If the table collapses below 2x2, return (mi, p=1.0, chi2=0.0).
+    
         Args:
             rankings1: First rater's rankings
             rankings2: Second rater's rankings
-            
+    
         Returns:
             Tuple of (mutual_information, p_value, chi_square_statistic)
         """
-        # Determine bin count (sqrt rule, minimum 5 for chi-square validity)
-        bins = max(int(np.ceil(np.sqrt(len(rankings1)))), 5)
-        
-        # Create 2D histogram (contingency table)
+        n = len(rankings1)
+        # bins: at least 5 for chi-square validity, but never more than n//2 to avoid sparsity
+        bins = max(5, min(int(np.ceil(np.sqrt(n))), max(5, n // 2)))
+    
+        # 2D histogram (contingency table)
         joint_dist, _, _ = np.histogram2d(
-            rankings1, rankings2, 
+            rankings1, rankings2,
             bins=bins,
-            range=[[rankings1.min(), rankings1.max()], 
+            range=[[rankings1.min(), rankings1.max()],
                    [rankings2.min(), rankings2.max()]]
         )
-        
-        # Chi-square test for independence
-        chi2, p_value, dof, _ = chi2_contingency(joint_dist)
-        
-        # Compute mutual information
-        # Add small constant to avoid log(0)
-        joint_dist_smooth = joint_dist + 1e-10
-        joint_dist_norm = joint_dist_smooth / np.sum(joint_dist_smooth)
-        
-        marginal_x = np.sum(joint_dist_norm, axis=1)
-        marginal_y = np.sum(joint_dist_norm, axis=0)
-        
-        mi = (entropy(marginal_x) + entropy(marginal_y) - 
-              entropy(joint_dist_norm.flatten()))
-        
-        return round(mi, 3), round(p_value, 3), round(chi2, 3)
+    
+        # ---- SURGICAL FIX: drop all-zero rows/columns before chi-square ----
+        row_mask = joint_dist.sum(axis=1) > 0
+        col_mask = joint_dist.sum(axis=0) > 0
+        reduced = joint_dist[np.ix_(row_mask, col_mask)]
+    
+        # If the reduced table is too small, skip chi-square safely
+        if reduced.size == 0 or reduced.shape[0] < 2 or reduced.shape[1] < 2:
+            # still compute MI on the smoothed full table (below), but report no evidence of dependence
+            chi2, p_value = 0.0, 1.0
+        else:
+            # Disable Yates continuity correction for stability in sparse-but-valid tables
+            chi2, p_value, _, _ = chi2_contingency(reduced, correction=False)
+            chi2 = float(chi2)
+            p_value = float(p_value)
+        # -------------------------------------------------------------------
+    
+        # Mutual information on a smoothed version of the original table (numerically stable)
+        joint_smooth = joint_dist + 1e-12
+        joint_norm = joint_smooth / np.sum(joint_smooth)
+        mx = np.sum(joint_norm, axis=1)
+        my = np.sum(joint_norm, axis=0)
+        mi = (entropy(mx) + entropy(my) - entropy(joint_norm.flatten()))
+        mi = float(np.round(mi, 3))
+    
+        return mi, round(p_value, 3), round(chi2, 3)
+
     
     def estimate_gumbel_theta(self, rankings_df: pd.DataFrame) -> float:
         """
