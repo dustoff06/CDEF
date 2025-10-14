@@ -377,10 +377,12 @@ def run_cdef_demonstration():
     return df_results
 
 
-if __name__ == "__main__":
+def main():
+    # keep your existing run_cdef_demonstration(), or call it here
     results_df = run_cdef_demonstration()
-    
-    # Save summary
-    output_file = '/mnt/user-data/outputs/cdef_summary_fixed.csv'
-    results_df.to_csv(output_file, index=False)
-    print(f"\n✓ Summary saved to: {output_file}")
+    # optionally print/save summary here
+    return 0
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+
