@@ -30,20 +30,6 @@ except ModuleNotFoundError:
         os.getcwd()
     ]
     
-    for path in possible_paths:
-        if path not in sys.path:
-            sys.path.insert(0, path)
-    
-    try:
-        from gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
-    except ModuleNotFoundError:
-        print("ERROR: Cannot find gumbel_copula_fixed.py")
-        print(f"Searched in: {possible_paths}")
-        print(f"Current directory: {os.getcwd()}")
-        print("\nPlease ensure gumbel_copula_fixed.py is in the same directory as this script")
-        print("or in /home/claude or /mnt/user-data/outputs")
-        sys.exit(1)
-
 
 def create_phantom_scenario():
     """
