@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdef-analyzer"
+version = "0.1.0"
+description = "CDEF: Concordance–Dispersion–Extremeness analyzer with Gumbel-copula ranking diagnostics"
+readme = "README.md"
+requires-python = ">=3.9,<3.12"
+license = { text = "MIT" }
+authors = [{ name="Your Name", email="you@example.com" }]
+keywords = ["copula", "ranking", "Gumbel", "Kendall", "Mallows", "CDEF"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Science/Research",
+  "Topic :: Scientific/Engineering :: Information Analysis"
+]
+dependencies = [
+  "numpy>=1.23,<2.0",
+  "pandas>=1.5,<3.0",
+  "scipy>=1.9,<2.0",
+  "copulas>=0.9,<1.0"
+]
+
+[project.urls]
+Homepage = "https://github.com/youruser/CDEF"
+Documentation = "https://github.com/youruser/CDEF/blob/main/docs/usage.md"
+Issues = "https://github.com/youruser/CDEF/issues"
+
+[project.scripts]
+cdef-demo = "cdef_analyzer.demo:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
