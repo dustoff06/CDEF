@@ -1,4 +1,26 @@
-from .core import RankDependencyAnalyzer, CopulaResults
-from ._version import __version__
+"""
+CDEF Analyzer: Copula-based Detection of Extremeness & Flexibility
 
-__all__ = ["RankDependencyAnalyzer", "CopulaResults", "__version__"]
+A statistical framework for analyzing ranking concordance using Gumbel copulas,
+distinguishing genuine agreement from phantom concordance (shared biases).
+"""
+
+from .gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
+from .core import (
+    analyze_excel,
+    analyze_dataframe,
+    results_to_dict,
+    run_demo_scenarios,
+)
+
+__version__ = "1.0.0"
+
+__all__ = [
+    "RankDependencyAnalyzer",
+    "CopulaResults",
+    "analyze_excel",
+    "analyze_dataframe",
+    "results_to_dict",
+    "run_demo_scenarios",
+    "__version__",
+]
