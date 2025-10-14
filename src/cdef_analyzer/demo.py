@@ -16,7 +16,7 @@ from typing import Dict, Tuple, Optional
 from dataclasses import dataclass
 import sys
 import os
-from .gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
+from .core import RankDependencyAnalyzer, CopulaResults
 
 # Try to import from multiple locations
 try:
