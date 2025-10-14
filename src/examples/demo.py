@@ -18,18 +18,7 @@ import sys
 import os
 from .core import RankDependencyAnalyzer, CopulaResults
 
-# Try to import from multiple locations
-try:
-    from gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
-except ModuleNotFoundError:
-    # Add common paths
-    possible_paths = [
-        '/home/claude',
-        '/mnt/user-data/outputs',
-        os.path.dirname(os.path.abspath(__file__)),
-        os.getcwd()
-    ]
-    
+   
 
 def create_phantom_scenario():
     """
