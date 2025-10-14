@@ -1,0 +1,7 @@
+numpy>=1.23
+pandas>=1.5
+scipy>=1.10
+copulas>=0.10          # provides copulas.bivariate.Gumbel
+openpyxl>=3.1          # pandas read_excel/to_excel engine for .xlsx
+xlsxwriter>=3.1        # optional: faster to_excel writer
+matplotlib>=3.8        # if you render the CDEF surface figure
