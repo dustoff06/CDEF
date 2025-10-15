@@ -512,7 +512,7 @@ class RankDependencyAnalyzer:
                 # For large n, use Stirling approximation: log(n!) ≈ n*log(n) - n
                 n = len(rankings_df)
                 if n > 170:  # factorial(171) overflows
-                    log_factorial_n = n * np.log(n) - n  # Stirling
+                    log_factorial_n = n * math.log(n) - n  # Stirling
                 else:
                     log_factorial_n = math.log(math.factorial(n))
                 log_likelihood = -log_factorial_n  # log(1/n!)
