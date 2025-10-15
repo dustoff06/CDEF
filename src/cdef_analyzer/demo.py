@@ -5,6 +5,8 @@ import argparse
 import sys
 import csv
 from typing import Optional
+from typing import Tuple
+import pandas as pd
 
 from .gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
 
