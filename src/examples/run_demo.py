@@ -18,4 +18,3 @@ if __name__ == "__main__":
     results = main()
 EOF
 
-python run_demo.py
