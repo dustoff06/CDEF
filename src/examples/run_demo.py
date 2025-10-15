@@ -1,21 +1,15 @@
-from cdef_analyzer import run_demo_scenarios
-
-
-cat > run_demo.py << 'EOF'
 #!/usr/bin/env python3
-"""Run CDEF demonstration scenarios."""
-
-from cdef_analyzer import run_demo_scenarios
-
-
-def main():
-    """Run the 4-scenario CDEF demonstration"""
-    df_results, _ = run_demo_scenarios()
-    print("\n✓ Demo complete!")
-    return df_results
-
+from cdef_analyzer.demo import main
 
 if __name__ == "__main__":
-    results = main()
-EOF
+    # Run the exemplar with the repo’s example data
+    raise SystemExit(main([
+        "--excel", "src/examples/data.xlsx",
+        "--sheet", "Sheet1",
+        "--rater-col", "Rater",
+        "--ratee-col", "Ratee",
+        "--ranking-col", "Ranking",
+        "--seed", "42",
+    ]))
+
 
