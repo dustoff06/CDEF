@@ -189,11 +189,6 @@ relative_importance (dict)
 
 n_raters, n_items
 
-# Helper
-```bash
-from cdef_analyzer.core import format_results
-print(format_results(results))
-```
 
 # FAQ
 
