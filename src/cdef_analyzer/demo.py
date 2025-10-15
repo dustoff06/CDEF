@@ -143,6 +143,51 @@ def main(argv: Optional[list[str]] = None) -> int:
 
     return 0
 
+def run_demo_scenarios(
+    excel: str = "src/examples/data.xlsx",
+    sheet: str = "Sheet1",
+    rater_col: str = "Rater",
+    ratee_col: str = "Ratee",
+    ranking_col: str = "Ranking",
+    seed: int = 42,
+    out_csv: Optional[str] = None,
+) -> Tuple[pd.DataFrame, CopulaResults]:
+    """Programmatic wrapper that runs the same pipeline as the CLI and returns a one-row DF + results."""
+    analyzer = RankDependencyAnalyzer(random_seed=seed)
+    res = analyzer.analyze_from_excel(
+        file_path=excel,
+        sheet_name=sheet,
+        rater_col=rater_col,
+        ratee_col=ratee_col,
+        ranking_col=ranking_col,
+    )
+
+    # one-row summary table (mirror write_csv fields)
+    df = pd.DataFrame([{
+        "n_items": res.n_items,
+        "n_raters": res.n_raters,
+        "ranking_type": res.ranking_type,
+        "distribution_model": res.distribution_model,
+        "model_log_likelihood": res.model_log_likelihood,
+        "kendalls_W": res.kendalls_W,
+        "avg_kendalls_tau": res.avg_kendalls_tau,
+        "theta_scaled": res.theta_scaled,
+        "theta_gumbel": res.theta_gumbel,
+        "mutual_information": res.mutual_information,
+        "chi_square_stat": res.chi_square_stat,
+        "p_value": res.p_value,
+        "avg_log_likelihood": res.avg_log_likelihood,
+        "independence_log_likelihood": res.independence_log_likelihood,
+        "rel_concordance": res.relative_importance.get("Concordance", 0.0),
+        "rel_concurrence": res.relative_importance.get("Concurrence", 0.0),
+        "rel_extremeness": res.relative_importance.get("Extremeness", 0.0),
+    }])
+
+    if out_csv:
+        write_csv(res, out_csv)
+
+    return df, res
+
 
 if __name__ == "__main__":
     raise SystemExit(main())
