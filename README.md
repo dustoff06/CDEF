@@ -182,7 +182,5 @@ No. Everything runs on CPU.
 Can the analyzer handle ties?
 Yes. It detects non-forced rankings and adapts the modeling path.
 
-I have large data, anything to tune?
-Reduce verbose printing, skip writing per-scenario Excel files, and consider batching pairwise copula fits.
 
 
