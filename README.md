@@ -25,21 +25,21 @@ with automatic detection of **forced vs non-forced** rankings and data-driven ch
 ```bash
 CDEF/
 ├─ docs/
-│  └─ figures/
-│     └─ Figure 1.png
+│  └─ Figure_1.png
+├─ examples/
+│  ├─ data.xlsx              # exemplar input (Rater, Ratee, Ranking)
+│  └─ run_demo.py            # 4-scenario exemplar script
 ├─ src/
-│  ├─ cdef_analyzer/
-│  │  ├─ __init__.py
-│  │  └─ core.py            # library API (RankDependencyAnalyzer, helpers)
-│  ├─ examples/
-│  │  ├─ data.xlsx          # exemplar input (Rater, Ratee, Ranking)
-│  │  ├─ demo.py            # programmatic exemplar scenarios
-│  │  └─ run_demo.py        # CLI-style entry script
-│  └─ tests/
-│     └─ test_imports.py
+│  └─ cdef_analyzer/
+│     ├─ __init__.py         # re-exports: RankDependencyAnalyzer, CopulaResults
+│     ├─ _version.py
+│     ├─ demo.py             # CLI entry module (format_summary, write_csv, main)
+│     └─ gumbel_copula_fixed.py  # library implementation
+├─ tests/
 ├─ README.md
 ├─ requirements.txt
 └─ pyproject.toml
+
 
 ```
 
