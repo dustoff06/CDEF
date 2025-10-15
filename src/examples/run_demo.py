@@ -2,11 +2,16 @@
 """
 CDEF Demonstration: Detecting Phantom vs Genuine Concordance
 
-Reproduces the 4-scenario exemplar using the packaged analyzer:
-- Auto-detection of forced vs non-forced rankings
-- Mallows model for forced rankings under dependence
-- Proper log-likelihoods
-- Relative importance (weights; not conditional probabilities)
+Reproduces four synthetic scenarios using the packaged analyzer:
+- Phantom (Extreme Bias)
+- Genuine (Natural Agreement)
+- Random (No Agreement)
+- Clustered (Outlier rater)
+
+Design choices:
+- Converts wide rater×team rankings to the analyzer's expected long Excel format.
+- Calls RankDependencyAnalyzer.analyze_from_excel (same path as CLI) for parity.
+- Interprets results using W (concordance), θ (tail dependence), MI (concurrence), and τ (avg Kendall's tau).
 """
 
 from __future__ import annotations
@@ -20,36 +25,43 @@ import pandas as pd
 
 from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
 
+
 # ---------------------------
-# Scenario generators (NxR)
+# Scenario generators (N teams × R raters)
 # ---------------------------
 
 def _alt_extreme_pattern(n_teams: int) -> list[int]:
-    # alternate top and bottom: 1, n, 2, n-1, ...
+    """Alternate top and bottom ranks: 1, n, 2, n-1, ..."""
     pattern = []
     for i in range(n_teams // 2):
-        pattern.append(i + 1)
-        pattern.append(n_teams - i)
+        pattern.append(i + 1)          # top
+        pattern.append(n_teams - i)    # bottom
     if n_teams % 2 == 1:
         pattern.append(n_teams // 2 + 1)
     return pattern
 
-def create_phantom_scenario(n_teams: int = 136, rater_names = ('CBS','CFN','Congrove','NYT')) -> pd.DataFrame:
-    """HIGH W + VERY HIGH theta via shared extreme bias pattern with tiny perturbations."""
+
+def create_phantom_scenario(n_teams: int = 136, rater_names=('CBS', 'CFN', 'Congrove', 'NYT')) -> pd.DataFrame:
+    """
+    HIGH W + VERY HIGH theta via shared extreme-bias pattern with tiny perturbations.
+    """
     base = _alt_extreme_pattern(n_teams)
     rankings: Dict[str, list[int]] = {}
     for rater in rater_names:
         arr = base.copy()
-        for _ in range(2):  # tiny perturbation
+        for _ in range(2):  # small perturbations to avoid perfect ties
             i, j = np.random.choice(n_teams, 2, replace=False)
             arr[i], arr[j] = arr[j], arr[i]
         rankings[rater] = arr
     df = pd.DataFrame(rankings)
-    df.index.name = 'Team'
+    df.index.name = "Team"
     return df
 
-def create_genuine_scenario(n_teams: int = 136, rater_names = ('CBS','CFN','Congrove','NYT')) -> pd.DataFrame:
-    """HIGH W + MODERATE theta via natural agreement plus moderate noise."""
+
+def create_genuine_scenario(n_teams: int = 136, rater_names=('CBS', 'CFN', 'Congrove', 'NYT')) -> pd.DataFrame:
+    """
+    HIGH W + MODERATE theta via natural agreement plus moderate noise.
+    """
     base = list(range(1, n_teams + 1))
     rankings: Dict[str, list[int]] = {}
     for rater in rater_names:
@@ -59,44 +71,58 @@ def create_genuine_scenario(n_teams: int = 136, rater_names = ('CBS','CFN','Cong
             arr[i], arr[j] = arr[j], arr[i]
         rankings[rater] = arr
     df = pd.DataFrame(rankings)
-    df.index.name = 'Team'
+    df.index.name = "Team"
     return df
 
-def create_random_scenario(n_teams: int = 136, rater_names = ('CBS','CFN','Congrove','NYT')) -> pd.DataFrame:
-    """LOW W + LOW theta via independence."""
+
+def create_random_scenario(n_teams: int = 136, rater_names=('CBS', 'CFN', 'Congrove', 'NYT')) -> pd.DataFrame:
+    """
+    LOW W + LOW theta via independence (random permutations).
+    """
     rankings: Dict[str, list[int]] = {}
     for rater in rater_names:
         rankings[rater] = list(np.random.permutation(range(1, n_teams + 1)))
     df = pd.DataFrame(rankings)
-    df.index.name = 'Team'
+    df.index.name = "Team"
     return df
+
 
 def create_clustered_scenario(n_teams: int = 136) -> pd.DataFrame:
     """
-    HIGH W among 3 raters + one divergent rater (mimics Congrove-style divergence).
+    HIGH W among 3 raters + one divergent rater (mimics a "Congrove" outlier).
     """
     base = list(range(1, n_teams + 1))
     rankings: Dict[str, list[int]] = {}
-    for rater in ('CBS','CFN','NYT'):
+
+    # A tight cluster of three raters
+    for rater in ('CBS', 'CFN', 'NYT'):
         arr = base.copy()
-        for _ in range(8):  # small noise cluster
+        for _ in range(8):  # small noise
             i, j = np.random.choice(n_teams, 2, replace=False)
             arr[i], arr[j] = arr[j], arr[i]
         rankings[rater] = arr
+
+    # One divergent rater with much larger noise
     arr = base.copy()
-    for _ in range(40):  # much larger noise
+    for _ in range(40):
         i, j = np.random.choice(n_teams, 2, replace=False)
         arr[i], arr[j] = arr[j], arr[i]
     rankings['Congrove'] = arr
+
     df = pd.DataFrame(rankings)
-    df.index.name = 'Team'
+    df.index.name = "Team"
     return df
 
+
 # ---------------------------
-# Interpretation layer (like your Windows script)
+# Interpretation layer
 # ---------------------------
 
 def cdef_interpretation(results: CopulaResults) -> Tuple[float, str]:
+    """
+    Classify using W (concordance), θ (tail dependence), MI (concurrence), and τ (avg Kendall's tau).
+    Returns (probability_genuine, interpretation_string).
+    """
     W = results.kendalls_W
     theta = results.theta_scaled
     mi = results.mutual_information
@@ -117,25 +143,29 @@ def cdef_interpretation(results: CopulaResults) -> Tuple[float, str]:
     else:
         return 0.90, "○ RANDOM: No systematic agreement (independence)"
 
+
 # ---------------------------
 # Utilities
 # ---------------------------
 
 def to_long_format(rank_df: pd.DataFrame) -> pd.DataFrame:
-    """Convert wide rater×team rankings to long format expected by analyzer."""
+    """Convert wide rater×team rankings to the long format expected by the analyzer."""
     rows = []
     n = len(rank_df)
     for team_idx in range(n):
         for rater in rank_df.columns:
             rows.append({
-                "Ratee": f"Team_{team_idx+1}",
+                "Ratee": f"Team_{team_idx + 1}",
                 "Rater": rater,
                 "Ranking": int(rank_df.iloc[team_idx][rater]),
             })
     return pd.DataFrame(rows)
 
+
 def analyze_rank_df(analyzer: RankDependencyAnalyzer, rank_df: pd.DataFrame) -> CopulaResults:
-    """Write a temp Excel (Sheet1) and call analyze_from_excel to stay 100% consistent with CLI."""
+    """
+    Persist to a temp Excel file (Sheet1) and call analyze_from_excel to match CLI exactly.
+    """
     long_df = to_long_format(rank_df)
     with tempfile.TemporaryDirectory() as td:
         path = os.path.join(td, "scenario.xlsx")
@@ -147,6 +177,7 @@ def analyze_rank_df(analyzer: RankDependencyAnalyzer, rank_df: pd.DataFrame) -> 
             ratee_col="Ratee",
             ranking_col="Ranking",
         )
+
 
 # ---------------------------
 # Main demonstration
@@ -255,7 +286,7 @@ def main() -> int:
         print(f"    → P(Genuine|Data) = {row['P_Genuine']:.3f}")
         print(f"    → {row['CDEF_Interpretation']}")
 
-    # Optional: write a CSV summary if you like (comment out if not needed)
+    # Optionally export a CSV summary:
     # df_results.to_csv("cdef_summary_fixed.csv", index=False)
 
     return 0
