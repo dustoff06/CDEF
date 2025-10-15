@@ -75,6 +75,8 @@ PY
 
 # Quick Start (Option A)
 
+This example runs the NCAA analysis from the paper.
+
 ```bash
 
 python -m src.examples.run_demo \
@@ -102,6 +104,8 @@ You’ll see:
 
 # Option B-Python API
 
+This example runs the NCAA analysis from the paper.
+
 ```bash
 from cdef_analyzer.gumbel_copula_fixed import RankDependencyAnalyzer, format_results
 
@@ -113,15 +117,18 @@ results = an.analyze_from_excel(
     ratee_col="Ratee",
     ranking_col="Ranking",
 )
-print(format_results(results))
+print(format_results(results)) 
 
 ```
 
 # Option C-Reproduce Exemplars
 
+This example runs the exemplars from the paper.
+
 ```bash
 
-python src/examples/run_demo.py
+python src/examples/run_demo.py  
+
 ```
 
 This generates the Phantom / Genuine / Random / Clustered scenarios, writes scenario Excel files, prints summaries, and saves a comparison table cdef_summary_fixed.csv. The interpretation rule maps (W, theta, MI, mean_tau) to a narrative class and P(Genuine | Data).
