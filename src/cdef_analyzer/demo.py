@@ -6,7 +6,7 @@ import sys
 import csv
 from typing import Optional
 
-from gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
+from .gumbel_copula_fixed import RankDependencyAnalyzer, CopulaResults
 
 
 def format_summary(res: CopulaResults) -> str:
