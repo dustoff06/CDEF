@@ -73,8 +73,6 @@ PY
 
 ```
 
-
-
 # Quick Start (Option A)
 
 ```bash
@@ -150,6 +148,7 @@ Paths: Examples show WSL-style mounts, but standard Windows/macOS/Linux paths wo
 
 # API Sketch
 ```bash
+from cdef_analyzer import *
 an = RankDependencyAnalyzer(
     num_samples=10000,        # for Monte Carlo/permutation tasks if used
     significance_level=0.05,  # chi-square threshold
@@ -163,6 +162,7 @@ results = an.analyze_from_excel(
     ratee_col="Ratee",
     ranking_col="Ranking",
 )
+results
 ```
 results contains (non-exhaustive):
 
