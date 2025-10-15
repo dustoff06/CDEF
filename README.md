@@ -45,19 +45,32 @@ CDEF/
 
 ## Installation
 
-Tested on **Python 3.9** (Linux/macOS/Windows; examples show WSL paths but any OS path works).
+Tested on **Python 3.12** (Linux/macOS/Windows; examples show WSL paths but any OS path works).
 
 ```bash
 # Clone and create a virtual environment
 git clone https://github.com/dustoff06/CDEF.git
 cd CDEF
-python3.9 -m venv .venv
-# Windows: .venv\Scripts\activate
+
+python -m venv .venv            # cross-platform; avoids hardcoding version
+# Windows PowerShell:
+#   .venv\Scripts\Activate.ps1
+# macOS/Linux:
 source .venv/bin/activate
 
-# Install dependencies and the package in editable mode
+# Upgrade build tooling
+pip install -U pip setuptools wheel
+
+# Install dependencies and the package (editable dev install)
 pip install -r requirements.txt
-pip install -e .
+pip install -e .               
+
+# Quick check (imports public API re-exports)
+python - <<'PY'
+from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
+print("OK:", RankDependencyAnalyzer, CopulaResults)
+PY
+
 ```
 
 
@@ -92,7 +105,7 @@ You’ll see:
 # Option B-Python API
 
 ```bash
-from cdef_analyzer.core import RankDependencyAnalyzer, format_results
+from cdef_analyzer.gumbel_copula_fixed import RankDependencyAnalyzer, format_results
 
 an = RankDependencyAnalyzer(random_seed=42)
 results = an.analyze_from_excel(
