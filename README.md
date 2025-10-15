@@ -160,23 +160,16 @@ print(format_summary(res))            # nice human-readable report
 # write_csv(res, "ncaa_summary.csv")  # optional: save headline metrics
 
 ```
-results contains (non-exhaustive):
+Results contains (non-exhaustive):
 
-theta_scaled, theta_gumbel, kendalls_W, avg_kendalls_tau
-
-mutual_information, chi_square_stat, p_value
-
-avg_log_likelihood, independence_log_likelihood
-
-pairwise_thetas (dict)
-
-tau_matrix (pandas DataFrame)
-
-ranking_type, distribution_model, model_log_likelihood
-
-relative_importance (dict)
-
-n_raters, n_items
+- `theta_scaled`, `theta_gumbel`, `kendalls_W`, `avg_kendalls_tau`
+- `mutual_information`, `chi_square_stat`, `p_value`
+- `avg_log_likelihood`, `independence_log_likelihood`
+- `pairwise_thetas` *(dict)*
+- `tau_matrix` *(pandas.DataFrame)*
+- `ranking_type`, `distribution_model`, `model_log_likelihood`
+- `relative_importance` *(dict)*
+- `n_raters`, `n_items`
 
 
 # FAQ
