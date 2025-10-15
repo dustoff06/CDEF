@@ -1,4 +1,4 @@
-from gumbel_copula_fixed import run_demo_scenarios
+from cdef_analyzer.gumbel_copula_fixed import run_demo_scenarios
 
 cat > run_demo.py << 'EOF'
 #!/usr/bin/env python3
