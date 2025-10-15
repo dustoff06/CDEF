@@ -514,7 +514,7 @@ class RankDependencyAnalyzer:
                 if n > 170:  # factorial(171) overflows
                     log_factorial_n = n * np.log(n) - n  # Stirling
                 else:
-                    log_factorial_n = np.log(math.factorial(n))
+                    log_factorial_n = math.log(math.factorial(n))
                 log_likelihood = -log_factorial_n  # log(1/n!)
                 return 'Uniform Permutation (forced, independent)', log_likelihood
         else:  # non-forced
