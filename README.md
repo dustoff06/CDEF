@@ -80,19 +80,14 @@ python -m cdef_analyzer.demo \
 
 You’ll see:
 
-  ranking type (forced / non-forced)
-  
-  selected distribution model (e.g., Mallows)
-  
-  Kendall’s W, theta (scaled), theta (from tau), mean Kendall’s tau, mutual information
-  
-  copula average log-likelihood, independence baseline
-  
-  relative-importance weights
-  
-  pairwise theta range
-  
-  a CDEF interpretation label (e.g., “GENUINE: Natural agreement”)
+- ranking type (forced / non-forced)
+- selected distribution model (e.g., Mallows)
+- Kendall’s W, θ (scaled), θ (from τ), mean Kendall’s τ, mutual information
+- copula average log-likelihood, independence baseline
+- relative-importance weights
+- pairwise θ range
+- CDEF interpretation label (e.g., “GENUINE: Natural agreement”)
+
 
 # Option B-Python API
 
