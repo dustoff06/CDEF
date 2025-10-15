@@ -176,52 +176,41 @@ class RankDependencyAnalyzer:
     ) -> Tuple[float, float, float]:
         """
         Compute mutual information (in nats) and chi-square test for independence.
-
+    
         We bin ranks (sqrt rule, capped to avoid sparsity), build a contingency table,
         drop all-zero rows/columns before χ² (to avoid invalid expected counts),
         and compute MI from a smoothed table (natural log base ⇒ nats).
-
-        Args:
-            rankings1: First rater's rankings
-            rankings2: Second rater's rankings
-
-        Returns:
-            Tuple of (mutual_information, p_value, chi_square_statistic)
         """
         n = len(rankings1)
-        # bins: at least 5 for chi-square validity, but never more than n//2 to avoid sparsity
         bins = max(5, min(int(np.ceil(np.sqrt(n))), max(5, n // 2)))
-
-        # 2D histogram (contingency table)
+    
         joint_dist, _, _ = np.histogram2d(
             rankings1, rankings2,
             bins=bins,
             range=[[rankings1.min(), rankings1.max()],
                    [rankings2.min(), rankings2.max()]]
         )
-
-        # Drop all-zero rows/columns before χ²
+    
         row_mask = joint_dist.sum(axis=1) > 0
         col_mask = joint_dist.sum(axis=0) > 0
         reduced = joint_dist[np.ix_(row_mask, col_mask)]
-
-        # χ² test (only if table is at least 2x2)
+    
         if reduced.size == 0 or reduced.shape[0] < 2 or reduced.shape[1] < 2:
             chi2, p_value = 0.0, 1.0
         else:
             chi2, p_value, _, _ = chi2_contingency(reduced, correction=False)
             chi2 = float(chi2)
             p_value = float(p_value)
-
-        # Mutual information (smoothed for numerical stability), natural logs => nats
+    
         joint_smooth = joint_dist + 1e-12
         joint_norm = joint_smooth / np.sum(joint_smooth)
         mx = np.sum(joint_norm, axis=1)
         my = np.sum(joint_norm, axis=0)
         mi = (entropy(mx) + entropy(my) - entropy(joint_norm.flatten()))
         mi = float(np.round(mi, 3))
+    
+        return mi, float(np.round(p_value, 3)), float(np.round(chi2, 3))
 
-        return mi, float(np.round(p_value, 3)), float(np.round(chi2, 3)))
 
     def summarize_pairwise_mi_chi2(self, rankings_df: pd.DataFrame) -> Tuple[float, float, float]:
         """
