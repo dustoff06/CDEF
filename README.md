@@ -123,7 +123,7 @@ print(format_results(results))
 
 ```bash
 
-python -m src.examples.demo
+python src/examples/run_demo.py
 ```
 
 This generates the Phantom / Genuine / Random / Clustered scenarios, writes scenario Excel files, prints summaries, and saves a comparison table cdef_summary_fixed.csv. The interpretation rule maps (W, theta, MI, mean_tau) to a narrative class and P(Genuine | Data).
