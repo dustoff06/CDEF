@@ -23,7 +23,7 @@ from typing import Dict, Tuple
 import numpy as np
 import pandas as pd
 
-from src.cdef_analyzer import RankDependencyAnalyzer, CopulaResults
+from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
 
 
 # ---------------------------
