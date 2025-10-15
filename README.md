@@ -52,25 +52,17 @@ Tested on **Python 3.12** (Linux/macOS/Windows; examples show WSL paths but any 
 git clone https://github.com/dustoff06/CDEF.git
 cd CDEF
 
-python -m venv .venv            # cross-platform; avoids hardcoding version
+python -m venv .venv            # cross-platform; no hardcoded version
 # Windows PowerShell:
-#   .venv\Scripts\Activate.ps1
+#   .\.venv\Scripts\Activate.ps1
 # macOS/Linux:
 source .venv/bin/activate
 
 # Upgrade build tooling
-pip install -U pip setuptools wheel
+python -m pip install -U pip setuptools wheel
 
-# Install dependencies and the package (editable dev install)
-pip install -r requirements.txt
-pip install -e .               
-
-# Quick check (imports public API re-exports)
-python - <<'PY'
-from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
-print("OK:", RankDependencyAnalyzer, CopulaResults)
-PY
-
+# Install dependencies
+python -m pip install -r requirements.txt
 ```
 
 # Quick Start (Option A)
@@ -79,10 +71,10 @@ This example runs the NCAA analysis from the paper.
 
 ```bash
 
-python -m src.examples.run_demo \
-  --excel src/examples/data.xlsx \
+python -m cdef_analyzer.demo \
+  --excel examples/data.xlsx \
   --sheet Sheet1 \
-  --rater Rater --ratee Ratee --ranking Ranking \
+  --rater-col Rater --ratee-col Ratee --ranking-col Ranking \
   --seed 42
 ```
 
@@ -107,7 +99,8 @@ You’ll see:
 This example runs the NCAA analysis from the paper.
 
 ```bash
-from cdef_analyzer.gumbel_copula_fixed import RankDependencyAnalyzer, format_results
+from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
+from cdef_analyzer.demo import format_summary  # pretty printer
 
 an = RankDependencyAnalyzer(random_seed=42)
 results = an.analyze_from_excel(
@@ -127,7 +120,7 @@ This example runs the exemplars from the paper.
 
 ```bash
 
-python src/examples/run_demo.py  
+python examples/run_demo.py 
 
 ```
 
@@ -147,7 +140,7 @@ The analyzer internally pivots to wide form and auto-detects forced vs non-force
 
 # Determinism and environment
 
-Python: 3.9
+Python: 3.12
 
 Random seeds: numpy seed set to 42 for exemplars; the analyzer accepts a random_seed at initialization.
 
@@ -155,21 +148,22 @@ Paths: Examples show WSL-style mounts, but standard Windows/macOS/Linux paths wo
 
 # API Sketch
 ```bash
-from cdef_analyzer import *
-an = RankDependencyAnalyzer(
-    num_samples=10000,        # for Monte Carlo/permutation tasks if used
-    significance_level=0.05,  # chi-square threshold
-    random_seed=42
-)
+from cdef_analyzer import RankDependencyAnalyzer, CopulaResults
+from cdef_analyzer.demo import format_summary, write_csv  # helpers for pretty print / CSV
 
-results = an.analyze_from_excel(
-    file_path="src/examples/data.xlsx",
+an = RankDependencyAnalyzer(random_seed=42)
+
+res: CopulaResults = an.analyze_from_excel(
+    file_path="examples/data.xlsx",   # moved out of src/
     sheet_name="Sheet1",
     rater_col="Rater",
     ratee_col="Ratee",
     ranking_col="Ranking",
 )
-results
+
+print(format_summary(res))            # nice human-readable report
+# write_csv(res, "ncaa_summary.csv")  # optional: save headline metrics
+
 ```
 results contains (non-exhaustive):
 
