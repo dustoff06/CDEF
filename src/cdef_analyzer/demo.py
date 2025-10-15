@@ -112,37 +112,6 @@ def parse_args(argv: Optional[list[str]] = None) -> argparse.Namespace:
     p.add_argument("--out-csv", default=None, help="Optional path to write a summary CSV.")
     return p.parse_args(argv)
 
-
-def main(argv: Optional[list[str]] = None) -> int:
-    args = parse_args(argv)
-
-    analyzer = RankDependencyAnalyzer(random_seed=args.seed)
-
-    try:
-        res = analyzer.analyze_from_excel(
-            file_path=args.excel,
-            sheet_name=args.sheet,
-            rater_col=args.rater_col,
-            ratee_col=args.ratee_col,
-            ranking_col=args.ranking_col,
-        )
-    except Exception as e:
-        # Provide a clear message and a non-zero exit code.
-        sys.stderr.write(f"[cdef_analyzer.demo] Error: {e}\n")
-        return 2
-
-    print(format_summary(res))
-
-    if args.out_csv:
-        try:
-            write_csv(res, args.out_csv)
-            print(f"\nWrote summary CSV → {args.out_csv}")
-        except Exception as e:
-            sys.stderr.write(f"[cdef_analyzer.demo] Failed to write CSV: {e}\n")
-            return 3
-
-    return 0
-
 def run_demo_scenarios(
     excel: str = "src/examples/data.xlsx",
     sheet: str = "Sheet1",
@@ -187,6 +156,39 @@ def run_demo_scenarios(
         write_csv(res, out_csv)
 
     return df, res
+
+
+def main(argv: Optional[list[str]] = None) -> int:
+    args = parse_args(argv)
+
+    analyzer = RankDependencyAnalyzer(random_seed=args.seed)
+
+    try:
+        res = analyzer.analyze_from_excel(
+            file_path=args.excel,
+            sheet_name=args.sheet,
+            rater_col=args.rater_col,
+            ratee_col=args.ratee_col,
+            ranking_col=args.ranking_col,
+        )
+    except Exception as e:
+        # Provide a clear message and a non-zero exit code.
+        sys.stderr.write(f"[cdef_analyzer.demo] Error: {e}\n")
+        return 2
+
+    print(format_summary(res))
+
+    if args.out_csv:
+        try:
+            write_csv(res, args.out_csv)
+            print(f"\nWrote summary CSV → {args.out_csv}")
+        except Exception as e:
+            sys.stderr.write(f"[cdef_analyzer.demo] Failed to write CSV: {e}\n")
+            return 3
+
+    return 0
+
+
 
 
 if __name__ == "__main__":
