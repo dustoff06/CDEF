@@ -16,6 +16,8 @@ import warnings
 import math
 
 
+
+
 @dataclass
 class CopulaResults:
     """Container for copula analysis results"""
@@ -165,47 +167,52 @@ class RankDependencyAnalyzer:
         W = (12 * S) / (m ** 2 * (N ** 3 - N))
         return round(W, 3)
     
-    def compute_mutual_information_and_independence(
-        self, rankings1: np.ndarray, rankings2: np.ndarray
-    ) -> Tuple[float, float, float]:
-        """
-        Compute mutual information and chi-square test for independence.
-        
-        Uses binning to create contingency table for chi-square test.
-        
-        Args:
-            rankings1: First rater's rankings
-            rankings2: Second rater's rankings
-            
-        Returns:
-            Tuple of (mutual_information, p_value, chi_square_statistic)
-        """
-        # Determine bin count (sqrt rule, minimum 5 for chi-square validity)
-        bins = max(int(np.ceil(np.sqrt(len(rankings1)))), 5)
-        
-        # Create 2D histogram (contingency table)
-        joint_dist, _, _ = np.histogram2d(
-            rankings1, rankings2, 
-            bins=bins,
-            range=[[rankings1.min(), rankings1.max()], 
-                   [rankings2.min(), rankings2.max()]]
-        )
-        
-        # Chi-square test for independence
-        chi2, p_value, dof, _ = chi2_contingency(joint_dist)
-        
-        # Compute mutual information
-        # Add small constant to avoid log(0)
-        joint_dist_smooth = joint_dist + 1e-10
-        joint_dist_norm = joint_dist_smooth / np.sum(joint_dist_smooth)
-        
-        marginal_x = np.sum(joint_dist_norm, axis=1)
-        marginal_y = np.sum(joint_dist_norm, axis=0)
-        
-        mi = (entropy(marginal_x) + entropy(marginal_y) - 
-              entropy(joint_dist_norm.flatten()))
-        
-        return round(mi, 3), round(p_value, 3), round(chi2, 3)
+def compute_mutual_information_and_independence(
+    self, rankings1: np.ndarray, rankings2: np.ndarray
+) -> Tuple[float, float, float]:
+    """
+    Mutual information (nats) and chi-square test for independence
+    on a binned contingency of two rank columns.
+
+    Returns: (mi, p_value, chi2_stat)
+    """
+    n = len(rankings1)
+    # Bin rule: at least 5; cap to avoid severe sparsity
+    bins = max(5, min(int(np.ceil(np.sqrt(n))), max(5, n // 2)))
+
+    # Build 2D contingency
+    joint, _, _ = np.histogram2d(
+        rankings1, rankings2,
+        bins=bins,
+        range=[[rankings1.min(), rankings1.max()],
+               [rankings2.min(), rankings2.max()]]
+    )
+
+    # ---- Chi-square on reduced table (drop empty rows/cols) ----
+    row_mask = joint.sum(axis=1) > 0
+    col_mask = joint.sum(axis=0) > 0
+    reduced = joint[np.ix_(row_mask, col_mask)]
+
+    if reduced.size == 0 or reduced.shape[0] < 2 or reduced.shape[1] < 2:
+        chi2, p_value = 0.0, 1.0
+    else:
+        # No Yates correction (more stable for these tables)
+        chi2, p_value, _, _ = chi2_contingency(reduced, correction=False)
+        chi2 = float(chi2)
+        p_value = float(p_value)
+
+    # ---- Mutual information (nats) with tiny additive smoothing ----
+    eps = 1e-12
+    joint_smooth = joint + eps
+    joint_prob = joint_smooth / joint_smooth.sum()
+    px = joint_prob.sum(axis=1, keepdims=True)
+    py = joint_prob.sum(axis=0, keepdims=True)
+    # Avoid divide-by-zero through smoothing above
+    mi_matrix = joint_prob * np.log(joint_prob / (px @ py))
+    mi = float(np.round(np.nansum(mi_matrix), 3))
+
+    return mi, float(np.round(p_value, 3)), float(np.round(chi2, 3))
+
     
     def estimate_gumbel_theta(self, rankings_df: pd.DataFrame) -> float:
         """
